@@ -1,14 +1,25 @@
 import time
 
 
+def read_data(filename, offset=0, offset2=0):
+    data, first, second = [], [], []
+    with open(filename, 'r') as file:
+        for line in file:
+            data.append(line.strip())
+
+    for el in data[0].split('\t')[1:]:
+        first.append(float(el[offset:]))
+
+    for el in data[1].split('\t')[1:]:
+        second.append(float(el[offset2:]))
+
+    return first, second
+
+
 def natural(a, x):
     if len(a) == 0:
         return 0
-    result = a[0]
-    for i in range(1, len(a)):
-        result += a[i] * x ** i
-
-    return result
+    return a[0] + sum(a[i] * x ** i for i in range(1, len(a)))
 
 
 def horner(a, x):
@@ -37,12 +48,21 @@ def newton(x, y, x_val):
     return result
 
 
+def mse(y_true, y_pred):
+    return sum((y_p - y_t) ** 2 for y_p, y_t in zip(y_pred, y_true)) / len(y_true)
+
+
+def calculate_error(x_test, y_test, x_data, y_data):
+    interpolated_values = [newton(x_data, y_data, x) for x in x_test]
+    return mse(y_test, interpolated_values)
+
+
 def most_accurate_result(x, y):
     n = len(x)
     best_count = 0
     best_accuracy = float('inf')
 
-    for count in range(n+1, 2, -1):
+    for count in range(n + 1, 2, -1):
         step = max(1, n // count)
         x_sampled = x[::step]
         y_sampled = y[::step]
@@ -54,30 +74,6 @@ def most_accurate_result(x, y):
             best_count = count
 
     return best_count
-
-
-def calculate_error(x_test, y_test, x_data, y_data):
-    interpolated_values = [newton(x_data, y_data, x) for x in x_test]
-    return mse(y_test, interpolated_values)
-
-
-def mse(y_true, y_pred):
-    return sum((y_p - y_t) ** 2 for y_p, y_t in zip(y_pred, y_true)) / len(y_true)
-
-
-def read_data(filename, offset=0, offset2=0):
-    data, first, second = [], [], []
-    with open(filename, 'r') as file:
-        for line in file:
-            data.append(line.strip())
-
-    for el in data[0].split('\t')[1:]:
-        first.append(float(el[offset:]))
-
-    for el in data[1].split('\t')[1:]:
-        second.append(float(el[offset2:]))
-
-    return first, second
 
 
 a_data, x_data = read_data("dataH.txt", 3)  # 1
@@ -94,13 +90,6 @@ start = time.perf_counter_ns()
 horner_value = [horner(a_sampled, x) for x in x_sampled]  # 3
 end = time.perf_counter_ns()
 horner_time = end - start
-
-mse_natural = mse(natural_value, x_sampled)
-mse_horner = mse(horner_value, x_sampled)
-
-print(f'MSE for natural: {mse_natural}')  # 4
-print(f'MSE for horner: {mse_horner}')  # 5
-print(f'Difference: {abs(mse_natural - mse_horner)}')
 
 print(f'\nTiming:\nnatural_time='
       f'{natural_time}, horner_time={horner_time}')  # 4
