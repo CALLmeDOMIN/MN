@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def read_data(filename):
     data, intercept, matrix = [], [], []
     with open(filename, 'r') as file:
@@ -17,18 +20,20 @@ def read_data(filename):
     return n, intercept, matrix
 
 
+np.set_printoptions(precision=2)
+
+
 def print_matrix(matrix):
-    for row in matrix:
-        for el in row:
-            el = round(el, 2)
-            print(f'{el}\t', end='')
-        print()
+    np_matrix = np.array(matrix)
+    print(np_matrix)
     print()
 
 
 def gaussian_elimination(matrix, intercept):
+    step = 1
     for k in range(len(matrix)):
         for i in range(k + 1, len(matrix)):
+            print(f'Step {step}:')
             if matrix[k][k] == 0:
                 matrix_pivoting(matrix)
             try:
@@ -41,6 +46,10 @@ def gaussian_elimination(matrix, intercept):
                 if matrix[i][j] < 10 ** -10 and matrix[i][j] > -10 ** -10:
                     matrix[i][j] = 0.0
             matrix[i][len(matrix) - 1] -= factor * matrix[k][len(matrix) - 1]
+            print_matrix(matrix)
+            print(intercept)
+            print()
+            step += 1
 
 
 def is_linear_independent(matrix):
