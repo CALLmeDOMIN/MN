@@ -29,27 +29,41 @@ def print_matrix(matrix):
     print()
 
 
+def matrix_pivoting(matrix, intercept, k):
+    max_value = matrix[k][k]
+    max_index = k
+    for j in range(k + 1, len(matrix)):
+        if abs(matrix[j][k]) > abs(max_value):
+            max_value = matrix[j][k]
+            max_index = j
+    matrix[k], matrix[max_index] = matrix[max_index], matrix[k]
+    intercept[k], intercept[max_index] = intercept[max_index], intercept[k]
+
+
 def gaussian_elimination(matrix, intercept):
-    step = 1
     for k in range(len(matrix)):
+        matrix_pivoting(matrix, intercept, k)
+        if matrix[k][k] == 0:
+            continue
         for i in range(k + 1, len(matrix)):
-            print(f'Step {step}:')
-            if matrix[k][k] == 0:
-                matrix_pivoting(matrix)
-            try:
-                factor = matrix[i][k] / matrix[k][k]
-            except ZeroDivisionError:
-                factor = 0
+            factor = matrix[i][k] / matrix[k][k]
             for j in range(k, len(matrix)):
                 matrix[i][j] -= factor * matrix[k][j]
-                intercept[i] -= factor * intercept[k]
-                if matrix[i][j] < 10 ** -10 and matrix[i][j] > -10 ** -10:
-                    matrix[i][j] = 0.0
-            matrix[i][len(matrix) - 1] -= factor * matrix[k][len(matrix) - 1]
-            print_matrix(matrix)
-            print(intercept)
-            print()
-            step += 1
+            intercept[i] -= factor * intercept[k]
+        print("Step", k+1)
+        print("Matrix:")
+        print_matrix(matrix)
+        print("Intercept:")
+        print_matrix(intercept)
+        print("\n")
+
+
+def back_substitution(matrix, intercept):
+    n = len(matrix)
+    for i in range(n - 1, -1, -1):
+        intercept[i] = (intercept[i] - sum(matrix[i][j] * intercept[j]
+                        for j in range(i + 1, n))) / matrix[i][i]
+    return intercept
 
 
 def is_linear_independent(matrix):
@@ -76,19 +90,6 @@ def is_linear_independent(matrix):
     return is_linear_independent_global
 
 
-def matrix_pivoting(matrix):
-    for i in range(len(matrix)):
-        max_value = matrix[i][i]
-        max_index = i
-        for j in range(i + 1, len(matrix)):
-            if abs(matrix[j][i]) > abs(max_value):
-                max_value = matrix[j][i]
-                max_index = j
-        matrix[i], matrix[max_index] = matrix[max_index], matrix[i]
-
-    return matrix
-
-
 n_a, intercept_a, matrix_a = read_data('dataA.txt')
 n_b, intercept_b, matrix_b = read_data('dataB.txt')
 n_c, intercept_c, matrix_c = read_data('dataC.txt')
@@ -106,17 +107,17 @@ print(is_linear_independent_b)
 print(is_linear_independent_c)
 print()
 
-if is_linear_independent_a == False:
+if not is_linear_independent_a:
     gaussian_elimination(matrix_a, intercept_a)
-    print_matrix(matrix_a)
+    back_substitution(matrix_a, intercept_a)
 
-if is_linear_independent_b == False:
+if not is_linear_independent_b:
     gaussian_elimination(matrix_b, intercept_b)
-    print_matrix(matrix_b)
+    back_substitution(matrix_b, intercept_b)
 
-if is_linear_independent_c == False:
+if not is_linear_independent_c:
     gaussian_elimination(matrix_c, intercept_c)
-    print_matrix(matrix_c)
+    back_substitution(matrix_c, intercept_c)
 
 print(intercept_a)
 print(intercept_b)
