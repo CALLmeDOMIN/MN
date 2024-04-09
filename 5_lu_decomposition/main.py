@@ -21,10 +21,18 @@ def print_matrix(matrix):
     print()
 
 
+def print_lu(L, U):
+    print('L:')
+    print_matrix(L)
+    print('U:')
+    print_matrix(U)
+
+
 def lu_decomposition(length, matrix, intercept):
     L = np.zeros((length, length))
     U = np.zeros((length, length))
 
+    step = 0
     for i in range(length):
         L[i][i] = 1
         for j in range(i, length):
@@ -32,15 +40,17 @@ def lu_decomposition(length, matrix, intercept):
             for k in range(i):
                 sm += L[i][k] * U[k][j]
             U[i][j] = matrix[i][j] - sm
+        print(f'step: {step}')
+        print_lu(L, U)
+        step += 1
         for j in range(i + 1, length):
             sm = 0
             for k in range(i):
                 sm += L[j][k] * U[k][i]
             L[j][i] = (matrix[j][i] - sm) / U[i][i]
-    print('L:')
-    print_matrix(L)
-    print('U:')
-    print_matrix(U)
+        print(f'step: {step}')
+        print_lu(L, U)
+        step += 1
 
     print("test:")
     print_matrix(np.dot(L, U) - matrix)
@@ -51,6 +61,7 @@ def lu_decomposition(length, matrix, intercept):
         for j in range(i):
             sm += L[i][j] * z[j]
         z[i] = intercept[i] - sm
+
     print('z:')
     print_matrix(z)
 
