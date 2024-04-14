@@ -1,4 +1,4 @@
-from numeric_methods import horner
+from numeric_methods import horner_interpolation
 from math import cos
 
 
@@ -16,7 +16,7 @@ def f(x):
     return x * cos(x)**3
 
 
-def trapezodial_formula(f, n, a, b):
+def trapezoidal_formula(f, n, a, b):
     h = (b - a) / n
     result = 0.5 * (f(a) + f(b))
 
@@ -50,13 +50,14 @@ degree, a_i, a, b = read_from_file('data.txt')
 
 n = 100
 print(f"Values for n = {n}")
-print(trapezodial_formula(lambda x: horner(a_i, x), n, a, b))
-print(simpson_formula(lambda x: horner(a_i, x), n, a, b))
+print(trapezoidal_formula(lambda x: horner_interpolation(a_i, x), n, a, b))
+print(simpson_formula(lambda x: horner_interpolation(a_i, x), n, a, b))
 
 n = 100
 print(f"\nValues for n = {n}")
-first_trap = trapezodial_formula(lambda x: horner(a_i, x), n, a, b)
-first_simp = simpson_formula(lambda x: horner(a_i, x), n, a, b)
+first_trap = trapezoidal_formula(
+    lambda x: horner_interpolation(a_i, x), n, a, b)
+first_simp = simpson_formula(lambda x: horner_interpolation(a_i, x), n, a, b)
 print(f"Trap: {first_trap}\nSimp: {first_simp}")
 
 first_Expected = 707.7
@@ -69,7 +70,7 @@ print(f"Simp: {first_Expected} vs {first_simp} diff: "
 
 a, b = 3.5, 6.5296718531238060
 print(f"\nValues for a = {a} and b = {b} and n = {n}")
-integral_trap = trapezodial_formula(f, n, a, b)
+integral_trap = trapezoidal_formula(f, n, a, b)
 integral_simp = simpson_formula(f, n, a, b)
 print(f"Trap: {integral_trap}\nSimp: {integral_simp}")
 
