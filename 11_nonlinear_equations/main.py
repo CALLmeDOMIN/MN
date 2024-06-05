@@ -48,7 +48,7 @@ def print_roots(roots, real_roots):
                 real_roots, key=lambda real_root: abs(real_root - root))
             error = abs(root - closest_real_root)
             print(f'Root {i+1}: {root:.6f} '
-                  f'Closest Real Root: {closest_real_root:.6f} error: {error:.6f}')
+                  f'Closest Real Root: {closest_real_root:.6f} error: {error}')
         except TypeError:
             print(f'Root {i+1}: None')
 
