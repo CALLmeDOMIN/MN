@@ -1,116 +1,150 @@
-from numpy import log10 as np_log10, cosh as np_cosh, exp as np_exp, sin as np_sin, sqrt as np_sqrt, isclose as np_isclose, abs as np_abs, linspace as np_linspace, inf as np_inf, isfinite as np_isfinite
-
-def bisection_method(f, a, b, tol=1e-6, max_iter=100):
-    if f(a) * f(b) > 0:
-        return None, None
-    for i in range(max_iter):
-        c = (a + b) / 2
-        if f(c) == 0 or (b - a) / 2 < tol:
-            return c, i
-        if f(c) * f(a) < 0:
-            b = c
-        else:
-            a = c
-    return (a + b) / 2, i
-
-
-def false_position_method(f, a, b, tol=1e-6, max_iter=100):
-    if f(a) * f(b) > 0:
-        return None, None
-    for i in range(max_iter):
-        if np_isclose(f(b) - f(a), 0, atol=tol):
-            return None, None
-        c = (a * f(b) - b * f(a)) / (f(b) - f(a))
-        if not np_isfinite(f(c)):
-            return None, None
-        if np_abs(f(c)) < tol:
-            return c, i
-        if f(c) * f(a) < 0:
-            b = c
-        else:
-            a = c
-    return (a * f(b) - b * f(a)) / (f(b) - f(a)), i
-
-
-def find_roots(f, a, b, tol=1e-6, max_iter=1000, method=bisection_method):
-    roots = []
-    intervals = np_linspace(a, b, max_iter)
-    for i in range(len(intervals) - 1):
-        a = intervals[i]
-        b = intervals[i + 1]
-        if f(a) * f(b) <= 0:
-            try:
-                root, iterations = method(f, a, b, tol, max_iter)
-                if root is not None:
-                    roots.append((root, iterations))
-            except (ZeroDivisionError, ValueError):
-                pass
-    return roots
-
-def is_real_root(found_root, real_roots, tol=1e-6):
-    return any(abs(found_root - real_root) < tol for real_root in real_roots)
-
-
-def find_and_check_roots(f, a, b, real_roots, tol=1e-6, max_iter=100, method=bisection_method):
-    roots = find_roots(f, a, b, tol, max_iter, method)
-    real_roots_found = []
-    real_roots_iterations = []
-    for root, iterations in roots:
-        if is_real_root(root, real_roots, tol):
-            real_roots_found.append(root)
-            real_roots_iterations.append(iterations)
-    return real_roots_found, real_roots_iterations
-
-def print_roots(roots, iterations):
-    if len(roots) == 0:
-        print("No real roots found")
-    else:
-        for i in range(len(roots)):
-            print(f"Root: {roots[i]}, Iterations: {iterations[i]}")
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def f1(x):
-    if x == 0:
-        return np_inf
-    else:
-        return np_log10(x ** 2 + 1) - x ** 3
+    return np.log10(x**2 + 1) - x**3
 
 
 def f2(x):
-    if x == 0:
-        return np_inf
-    else:
-        return np_cosh(x) - np_sqrt(x)
+    return np.cosh(x) - np.sqrt(x)
 
 
 def f3(x):
     if x == 0:
-        return np_inf
-    else:
-        return np_exp(-x) + np_sin(x) - 1 / x ** 2
+        return np.inf
+    return np.exp(-x) + np.sin(x) - 1/x**2
 
 
-start, end = 1e-6, 7
+def bisection_method(func, a, b, tol=1e-6, max_iter=100):
+    if func(a) * func(b) >= 0:
+        print("Błąd: f(a) i f(b) muszą mieć różne znaki")
+        return None
 
-real_roots1 = [0.402505121796887]
-real_roots2 = []
-real_roots3 = [0.664813174227518566941017070, 3.13422699566592059290424701, 6.29395990811660257022381935]
+    iterations = []
+    errors = []
+
+    for _ in range(max_iter):
+        c = (a + b) / 2
+        iterations.append(c)
+        errors.append(abs(func(c)))
+
+        if abs(func(c)) < tol:
+            return c, iterations, errors
+
+        if func(c) * func(a) < 0:
+            b = c
+        else:
+            a = c
+
+    return (a + b) / 2, iterations, errors
 
 
-print_roots(*find_and_check_roots(
-    f1, start, end, real_roots1))
+def false_position_method(func, a, b, tol=1e-6, max_iter=100):
+    if func(a) * func(b) >= 0:
+        print("Błąd: f(a) i f(b) muszą mieć różne znaki")
+        return None
 
-print_roots(*find_and_check_roots(
-    f2, start, end, real_roots2))
+    iterations = []
+    errors = []
 
-print_roots(*find_and_check_roots(
-    f3, start, end, real_roots3))
+    c = a
+    for _ in range(max_iter):
+        c = b - (func(b) * (b - a)) / (func(b) - func(a))
+        iterations.append(c)
+        errors.append(abs(func(c)))
 
-print_roots(*find_and_check_roots(
-    f1, start, end, real_roots1, method=false_position_method))
+        if abs(func(c)) < tol:
+            return c, iterations, errors
 
-print_roots(*find_and_check_roots(
-    f2, start, end, real_roots2, method=false_position_method))
+        if func(c) * func(a) < 0:
+            b = c
+        else:
+            a = c
 
-print_roots(*find_and_check_roots(
-    f3, start, end, real_roots3, method=false_position_method))
+    return c, iterations, errors
+
+
+def find_opposite_sign_intervals(func, start, end, step=0.1):
+    intervals = []
+    x = start
+    while x < end:
+        if func(x) * func(x + step) < 0:
+            intervals.append((x, x + step))
+        x += step
+    return intervals
+
+
+def create_results_table(iterations, errors):
+    return pd.DataFrame({
+        'Iteracja': range(1, len(iterations) + 1),
+        'Przybliżenie': iterations,
+        'Błąd bezwzględny': errors
+    })
+
+
+def plot_iterations(method, iterations, errors, title):
+    fig, axs = plt.subplots(2, 1, figsize=(10, 8))
+    axs[0].plot(range(len(iterations)), iterations, 'o-')
+    axs[0].set_title(f'{method} - Przybliżenia miejsc zerowych ({title})')
+    axs[0].set_xlabel('Iteracja')
+    axs[0].set_ylabel('Przybliżenie')
+
+    axs[1].plot(range(len(errors)), errors, 'o-')
+    axs[1].set_title(f'{method} - Błąd bezwzględny ({title})')
+    axs[1].set_xlabel('Iteracja')
+    axs[1].set_ylabel('Błąd')
+
+    plt.tight_layout()
+    plt.show()
+
+
+functions = {
+    'f1(x) = log10(x^2 + 1) - x^3': f1,
+    'f2(x) = cosh(x) - sqrt(x)': f2,
+    'f3(x) = exp(-x) + sin(x) - 1/x^2': f3
+}
+
+for name, func in functions.items():
+    print(f"\nAnaliza funkcji: {name}")
+    intervals = find_opposite_sign_intervals(func, 0.1, 7)
+
+    if not intervals:
+        print(f"Nie znaleziono odpowiednich przedziałów dla funkcji {
+              name} w zakresie [0.1, 7].")
+        continue
+
+    all_roots_bisection = []
+    all_roots_false_position = []
+
+    for a, b in intervals:
+        print(f"Analiza w przedziale: [{a:.3f}, {b:.3f}]")
+
+        result_bisection = bisection_method(func, a, b)
+        if result_bisection:
+            root_bisection, iter_bisection, errors_bisection = result_bisection
+            all_roots_bisection.append(root_bisection)
+            print(f"Metoda bisekcji - pierwiastek: {root_bisection}")
+            table_bisection = create_results_table(
+                iter_bisection, errors_bisection)
+            print(table_bisection)
+            plot_iterations('Metoda bisekcji', iter_bisection,
+                            errors_bisection, f"{name} [{a:.2f}, {b:.2f}]")
+
+        result_false_position = false_position_method(func, a, b)
+        if result_false_position:
+            root_false_position, iter_false_position, errors_false_position = result_false_position
+            all_roots_false_position.append(root_false_position)
+            print(
+                f"Metoda fałszywej linii - pierwiastek: {root_false_position}")
+            table_false_position = create_results_table(
+                iter_false_position, errors_false_position)
+            print(table_false_position)
+            plot_iterations('Metoda fałszywej linii', iter_false_position,
+                            errors_false_position, f"{name} [{a:.2f}, {b:.2f}]")
+
+    print(f"\nWszystkie pierwiastki znalezione metodą bisekcji dla {
+          name}: {all_roots_bisection}")
+    print(f"Wszystkie pierwiastki znalezione metodą fałszywej linii dla {
+          name}: {all_roots_false_position}")
